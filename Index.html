@@ -1,0 +1,107 @@
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>Quran Website</title>  <style>  
+body {  
+    font-family: Arial, sans-serif;  
+    background: #f4f7f6;  
+    margin: 0;  
+    padding: 0;  
+    text-align: center;  
+}  
+  
+header {  
+    background: #0b3d2e;  
+    color: white;  
+    padding: 20px;  
+}  
+  
+select {  
+    padding: 10px;  
+    margin: 20px;  
+    font-size: 16px;  
+}  
+  
+.ayah {  
+    background: white;  
+    margin: 15px;  
+    padding: 15px;  
+    border-radius: 10px;  
+    cursor: pointer;  
+    transition: 0.2s;  
+}  
+  
+.ayah:hover {  
+    background: #e6f2ef;  
+}  
+  
+.arabic {  
+    font-size: 24px;  
+    direction: rtl;  
+    margin-bottom: 10px;  
+}  
+  
+.translation {  
+    font-size: 16px;  
+    color: #333;  
+}  
+  
+audio {  
+    display: none;  
+}  
+</style>  </head>  <body>  <header>  
+    <h1>📖 The Holy Quran</h1>  
+    <p>Click any verse to hear audio</p>  
+</header>  <select id="surahSelect"></select>
+
+<div id="ayahContainer"></div>  <script>  
+const surahSelect = document.getElementById("surahSelect");  
+const ayahContainer = document.getElementById("ayahContainer");  
+  
+// Load Surah list  
+fetch("https://api.alquran.cloud/v1/surah")  
+.then(res => res.json())  
+.then(data => {  
+    data.data.forEach(surah => {  
+        const option = document.createElement("option");  
+        option.value = surah.number;  
+        option.textContent = surah.number + ". " + surah.englishName;  
+        surahSelect.appendChild(option);  
+    });  
+    loadSurah(1);  
+});  
+  
+surahSelect.addEventListener("change", () => {  
+    loadSurah(surahSelect.value);  
+});  
+  
+function loadSurah(surahNumber) {  
+    ayahContainer.innerHTML = "Loading...";  
+  
+    Promise.all([  
+        fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`).then(res => res.json()),  
+        fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.asad`).then(res => res.json())  
+    ])  
+    .then(([arabicData, translationData]) => {  
+        ayahContainer.innerHTML = "";  
+        arabicData.data.ayahs.forEach((ayah, index) => {  
+            const div = document.createElement("div");  
+            div.className = "ayah";  
+  
+            div.innerHTML = `  
+                <div class="arabic">${ayah.text}</div>  
+                <div class="translation">${translationData.data.ayahs[index].text}</div>  
+                <audio src="${ayah.audio}" id="audio${index}"></audio>  
+            `;  
+  
+            div.addEventListener("click", () => {  
+                document.getElementById(`audio${index}`).play();  
+            });  
+  
+            ayahContainer.appendChild(div);  
+        });  
+    });  
+}  
+</script>  </body>  
+</html> 
